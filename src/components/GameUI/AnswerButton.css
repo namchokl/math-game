@@ -1,0 +1,34 @@
+.answer-button {
+  position: relative;
+  width: 6rem;
+  height: 6rem;
+  flex-shrink: 0;
+  background-color: peachpuff;
+  border: 3px solid darkblue;
+  margin: 0.5rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.answer-button__click-area {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+}
+
+/* .answer-button:hover {
+  background-color: rgb(238, 136, 118);
+  border: 3px solid blue;
+} */
+
+.answer-button__label {
+  font-size: 4rem;
+  line-height: 6rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  user-select: none;
+}

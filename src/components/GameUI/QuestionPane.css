@@ -1,0 +1,29 @@
+.question-pane {
+  margin: 2px 0 0;
+  padding: 8px;
+  border: 2px grey solid;
+}
+
+.question-pane__title {
+  color: grey;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: normal;
+  margin: 0;
+}
+
+.question-pane__content {
+  color: blue;
+  text-align: center;
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0.5rem 0 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .question-pane {
+    margin-top: 40px;
+    padding: 15px;
+    border: 2px grey solid;
+  }
+}

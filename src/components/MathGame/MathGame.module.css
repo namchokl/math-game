@@ -1,0 +1,63 @@
+.mathgame {
+  width: 100%;
+  padding: 0 5px;
+  margin-bottom: 40px;
+}
+
+.instructionPane p {
+  margin: 4px 0 0 10px;
+  text-align: left;
+}
+
+.instructionPane p:first-child {
+  font-weight: bold;
+  margin: 4px 0 0 10px;
+}
+
+.startButton {
+  width: 80%;
+  padding: 0.5rem 1rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: aliceblue;
+  background-color: darkcyan;
+  border: 2px grey solid;
+}
+
+.playAgainButton {
+  padding: 0.4rem 0.8rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: aliceblue;
+  background-color: darkcyan;
+  border: 2px grey solid;
+}
+
+.resetButton {
+  padding: 0.4rem 0.8rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color:crimson;
+  background-color:sandybrown;
+  border: 2px grey solid;
+}
+
+.game-results {
+  margin: 0;
+}
+
+.game-results * {
+  margin: 0;
+}
+
+.title {
+  margin: 15px 0;
+  text-align: center;
+  color: grey;
+}
+
+.report {
+  margin: 0;
+  color:lightseagreen;
+  margin-bottom: 4rem;
+}
