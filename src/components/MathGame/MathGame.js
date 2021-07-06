@@ -1,24 +1,16 @@
 import { useState, useEffect } from 'react';
 
+import GameBoard from '../UI/GameBoard';
+import GameTitle from '../GameTitle';
 import AnswerPane from "../GameUI/AnswerPane";
 import QuestionPane from "../GameUI/QuestionPane";
 import StopWatch from '../GameUI/StopWatch';
+import AnimateText from '../GameUI/AnimateText';
+
+import { mathGenerators, mathGeneratorList } from './math-question-logic';
+import { randomInt } from '../../utils/mathUtil';
 
 import classes from './MathGame.module.css';
-// const MathGame_data = [
-//   {
-//     id: 1,
-//     question: '1 + 1',
-//     answer: 2,
-//     choices: [1, 2, 3, 4]
-//   },
-//   {
-//     id: 2,
-//     question: '4 + 1',
-//     answer: 5,
-//     choices: [1, 2, 5, 4]
-//   }
-// ];
 
 const generateGameData = (number) => {
   const choiceNum = 4,
@@ -26,47 +18,48 @@ const generateGameData = (number) => {
 
   const questionList = [];
   
-  let x1, x2, ans;
+  let correctIndex;
 
-  function createChoices(number, correctAns) {
+  function createChoices(number, correctAns, correctIndex) {
     const choices = [];
     const maxRandom = 10;
-    const correctIndex = Math.floor(Math.random() * number);
-    let ans;
+    let choice;
 
     for(let i=0; i<number; i++) {
       // ans = correctIndex === i ? correctAns : correctAns + Math.round(Math.random() * maxRandom - maxRandom/2);
       if( correctIndex === i ) {
-        ans = correctAns;
+        choice = correctAns;
       } else {
         do {
-          ans = correctAns + Math.round(Math.random() * maxRandom - maxRandom/2);
+          choice = correctAns + Math.round(Math.random() * maxRandom - maxRandom/2);
         }
-        while( ans === correctAns || choices.includes(ans));
+        while( choice === correctAns || choices.includes(choice));
       }
-      choices.push(ans);
+      choices.push(choice);
     }
 
-    console.group('createChoices');
-    console.log(correctIndex);
-    console.log(correctAns);
-    console.log(choices);
-    console.groupEnd();
+    // console.group('createChoices');
+    // console.log(correctIndex);
+    // console.log(correctAns);
+    // console.log(choices);
+    // console.groupEnd();
 
     return choices;
   }
 
+  const questionTypeNum = mathGeneratorList.length;
+
   for(let i=0; i<number; i++) {
-    x1 = Math.round(Math.random() * maxValue);
-    x2 = Math.round(Math.random() * maxValue);
-    ans = x1 + x2;
+    const {ans, question} = mathGeneratorList[randomInt(questionTypeNum)](maxValue);
+
+    correctIndex = randomInt(choiceNum);
 
     questionList.push(
       {
         id: i,
-        question: `${x1} + ${x2} = ?`,
-        answer: ans,
-        choices: createChoices(choiceNum, ans),
+        question: question,
+        answerIndex: correctIndex,
+        choices: createChoices(choiceNum, ans, correctIndex),
       }
     );
   }
@@ -103,9 +96,9 @@ const MathGame = (props) => {
     });
   }
 
-  const answerClickHandler = (clickedAnswer) => {
+  const answerClickHandler = (answerId) => {
     console.log( 'answer click !!');
-    if( gameData.answer === clickedAnswer ) {
+    if( gameData.answerIndex === answerId ) {
       const remainTime_ms = questionTimeout_ms - (Date.now() - startTime);
       console.log(`%c - time-score : ${remainTime_ms}`, 'color:red');
 
@@ -136,23 +129,28 @@ const MathGame = (props) => {
   }
 
   return (
-    <div className={classes.mathgame}>
-      { gameStarted && !gameEnd &&
-        <div>
-          <div className={classes.instructionPane}>
-            <p>Instruction:</p>
-            <p>click on the correct answer as fast as possible.</p>
-          </div>
-          <StopWatch startTime={startTime} timeout={questionTimeout_ms} onTimeout={timeoutHandler} showNumber={false} />
-          <QuestionPane number={questionIndex+1} total={totalQuestions} question={gameData.question}/>
-          <AnswerPane choices={gameData.choices} onSubmit={answerClickHandler} />
-        </div> 
-      }
-      { gameStarted || 
-          <button className={classes.startButton} onClick={gameStartHandler}>Start Game !!</button>
-      }
-      { gameStarted && 
-        <>
+    <GameBoard>
+      <GameTitle />
+      <section className={classes.mathgame}>
+        { gameStarted && !gameEnd &&
+          <div>
+            <div className={classes.instructionPane}>
+              <p>Instruction:</p>
+              <p>click on the correct answer as fast as possible.</p>
+            </div>
+            <StopWatch startTime={startTime} timeout={questionTimeout_ms} onTimeout={timeoutHandler} showNumber={false} />
+            <QuestionPane number={questionIndex+1} total={totalQuestions} question={gameData.question}/>
+            <AnswerPane choices={gameData.choices} onAnswer={answerClickHandler} />
+          </div> 
+        }
+        { !gameStarted &&
+            <div>
+              <AnimateText text='Ready ?' />
+              <button className={classes.startButton} onClick={gameStartHandler}>Start
+              </button>
+            </div>
+        }
+        { gameStarted && 
           <div className={classes['game-results']}>
             <h4 className={classes.title}>- Your Results -</h4>
             <div className={classes.report}>
@@ -161,14 +159,15 @@ const MathGame = (props) => {
               {/* <h3>Your time-score = {`${Math.round(score)}`}</h3> */}
             </div>
           </div>
-          {/* <button onClick={gameResetHandler}>Reset</button> */}
-        </>
-      }
-      { gameStarted && !gameEnd && <button className={classes.resetButton} onClick={gameResetHandler}>Reset</button> }
-      { gameEnd &&
-        <button className={classes.playAgainButton} onClick={gameResetHandler}>Play Again</button>
-      }
-    </div>
+        }
+        { gameStarted && !gameEnd && <button className={classes.resetButton} onClick={gameResetHandler}>Reset</button> }
+        { gameEnd &&
+          <button className={classes.playAgainButton} onClick={gameResetHandler}>
+            Play Again..
+          </button>
+        }
+      </section>
+    </GameBoard>
   );
 };
 

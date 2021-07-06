@@ -1,11 +1,14 @@
-import './App.css';
+import { Route } from 'react-router-dom';
 
-import GameBoard from './components/GameBoard';
+import './App.css';
+import MathGame from './components/MathGame/MathGame';
 
 function App() {
   return (
     <div className='App'>
-      <GameBoard />
+      <Route path='/math-game'>
+        <MathGame questionNum='10' />
+      </Route>
     </div>
   );
 }

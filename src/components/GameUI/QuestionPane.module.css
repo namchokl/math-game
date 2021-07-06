@@ -1,10 +1,10 @@
-.question-pane {
+.questionPane {
   margin: 2px 0 0;
   padding: 8px;
   border: 2px grey solid;
 }
 
-.question-pane__title {
+.questionPane__title {
   color: grey;
   text-align: left;
   font-size: 1rem;
@@ -12,7 +12,7 @@
   margin: 0;
 }
 
-.question-pane__content {
+.questionPane__content {
   color: blue;
   text-align: center;
   font-size: 3rem;
@@ -21,8 +21,7 @@
 }
 
 @media (min-width: 480px) {
-  .question-pane {
-    margin-top: 40px;
+  .questionPane {
     padding: 15px;
     border: 2px grey solid;
   }

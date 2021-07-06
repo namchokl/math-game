@@ -1,21 +1,17 @@
-import './AnswerButton.css';
+import classes from './AnswerButton.module.css';
 
 const AnswerButton = (props) => {
 
   const clickHandler = (event) => {
     console.log(event);
-    // event.target.parentElement.blur();
-    // event.target.blur();
-    // props.onSubmit.bind(null, props.label)
-    props.onSubmit(props.label)
+    props.onAnswer(props.id);
   };
 
   return (
-    <div className='answer-button' onClick={clickHandler} >
-      <p className='answer-button__label' >
+    <div className={classes.answerButton} onClick={clickHandler} >
+      <p className={classes.answerButton__label} >
         {props.label}
       </p>
-      {/* <div className='answer-button__click-area' ></div> */}
     </div>
   );
 };

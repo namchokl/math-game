@@ -1,4 +1,4 @@
-.answer-button {
+.answerButton {
   position: relative;
   width: 6rem;
   height: 6rem;
@@ -10,21 +10,12 @@
   cursor: pointer;
 }
 
-.answer-button__click-area {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: transparent;
-}
-
-/* .answer-button:hover {
+/* .answerButton:hover {
   background-color: rgb(238, 136, 118);
   border: 3px solid blue;
 } */
 
-.answer-button__label {
+.answerButton__label {
   font-size: 4rem;
   line-height: 6rem;
   font-weight: bold;

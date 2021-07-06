@@ -1,0 +1,17 @@
+.animateText {
+  margin-bottom: 0.5rem;
+}
+
+.char {
+  display: inline-block;
+  transition: transform 0.3s ease-in;
+  margin-right: 6px;
+  font-size: 100%;
+  /* font-weight: bold; */
+  color:rgb(68, 68, 68);
+  text-shadow: 1px 1px 2px grey ;
+}
+
+.char.space {
+  width: 0.2em;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import './StopWatch.css';
+import classes from './StopWatch.module.css';
 
 const StopWatch = (props) => {
   const [elaspeTime, setElaspeTime] = useState(0);  
@@ -8,22 +8,24 @@ const StopWatch = (props) => {
   const [remainTimePct, setRemainTimePct] = useState(100);
   // const [timeout, setTimeout] = useState(false);
 
+  const {startTime, timeout, onTimeout, showNumber} = props;
+
   useEffect(() => {
     const updateTime = () => {
-      const elaspeTime_ms = (Date.now() - props.startTime);
-      if( props.timeout > 0 ) {
-        const remainTime_ms = Math.max(0, props.timeout - elaspeTime_ms);
+      const elaspeTime_ms = (Date.now() - startTime);
+      if( timeout > 0 ) {
+        const remainTime_ms = Math.max(0, timeout - elaspeTime_ms);
         if( remainTime_ms === 0 ) {
-          if( props.onTimeout ) {
+          if( onTimeout ) {
             clearInterval(timer);
-            props.onTimeout();
+            onTimeout();
           }
         }
-        setRemainTimePct(remainTime_ms * 100 / props.timeout);
+        setRemainTimePct(remainTime_ms * 100 / timeout);
         setRemainTime(remainTime_ms);
       }
       setElaspeTime( elaspeTime_ms );
-      // setElaspeTime( ((Date.now() - props.startTime)/1000).toFixed(1) );
+      // setElaspeTime( ((Date.now() - startTime)/1000).toFixed(1) );
     }
 
     let timer = setInterval(() => {
@@ -32,15 +34,15 @@ const StopWatch = (props) => {
     return () => {
       clearInterval(timer);
     }
-  }, [props.startTime, props.timeout])
+  }, [startTime, timeout, onTimeout])
 
-  const displayTime = props.timeout > 0 ? remainTime : elaspeTime;
+  const displayTime = timeout > 0 ? remainTime : elaspeTime;
 
   return (
-    <div className='stopwatch'>
-      { props.showNumber && <p>{`${(displayTime/1000).toFixed(1)} sec`}</p> }
-      <div className='gaugeBar'>
-        <div className='gaugeBar__fill' style={{width: `${remainTimePct}%`}}>
+    <div className={classes.stopwatch}>
+      { showNumber && <p>{`${(displayTime/1000).toFixed(1)} sec`}</p> }
+      <div className={classes.gaugeBar}>
+        <div className={classes.gaugeBar__fill} style={{width: `${remainTimePct}%`}}>
         </div>
       </div>
     </div>

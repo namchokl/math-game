@@ -1,0 +1,39 @@
+.header {
+  margin: 10px 0 0 0;
+  color: grey;
+}
+
+.header h1 {
+  font-size: 1.5em;
+  margin: 0.2rem 0 0;
+}
+
+.header p {
+  font-size: 1em;
+  margin-top: 0.1rem;
+}
+
+.logo {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.logo svg {
+  height: 1.5rem;
+  color: red;
+  margin: 0;
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  line-height: 1.5rem;
+  display: inline-block;
+  margin: 0;
+}
+
+svg.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
