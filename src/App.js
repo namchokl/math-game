@@ -1,16 +1,26 @@
 import { Route } from 'react-router-dom';
 
+import MainHeader from './components/MainHeader';
+import MathGamePage from './pages/MathGamePage';
+import IceBrakeGamePage from './pages/IceBrakeGamePage';
+
 import './App.css';
-import MathGame from './components/MathGame/MathGame';
 
 function App() {
   return (
-    <div className='App'>
-      <Route path='/math-game'>
-        <MathGame questionNum='10' />
-      </Route>
-    </div>
+    <>
+      <MainHeader />
+      <div className='App'>
+        <Route path='/math-game'>
+          <MathGamePage />
+        </Route>
+        <Route path='/icebrake-game'>
+          <IceBrakeGamePage />
+        </Route>
+      </div>
+    </>
   );
-}
+
+};
 
 export default App;

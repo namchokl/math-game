@@ -1,4 +1,5 @@
 const SvgItemBuilder = {
+  use: (attr) => <use {...attr} />,
   rect: (attr) => <rect {...attr} />,
   circle: (attr) => <circle {...attr} />,
   path: (attr) => <path {...attr} />,
@@ -9,15 +10,28 @@ const SvgItemBuilder = {
   polyline: (attr) => <polyline {...attr} />,
 };
 
-const SvgBox = (props) => {
-  const { viewBox } = props;
-
-  const svgItems = props.items
+export const SvgItemListBuilder = (items) => {
+  return (
+    items
     .filter((item) => SvgItemBuilder.hasOwnProperty(item.tag))
     .map((item) => {
       const { tag, ...attr } = item;
       return SvgItemBuilder[tag](attr);
-    });
+    })
+  );
+};
+
+export const SvgGroup = (props) => {
+  return (
+    <g {...props} >
+      {props.children}
+    </g>
+  )
+};
+
+const SvgBox = (props) => {
+  const { viewBox } = props;
+  const svgItems = props.items && SvgItemListBuilder(props.items);
 
   return (
     <svg
@@ -26,6 +40,7 @@ const SvgBox = (props) => {
       viewBox={viewBox}
       fill='currentColor'
     >
+      {props.children}
       {svgItems}
     </svg>
   );

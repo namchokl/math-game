@@ -1,0 +1,14 @@
+.board {
+  position: relative;
+  width: 100%;
+}
+
+.board svg {
+  width: 100%;
+}
+
+.fixed {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

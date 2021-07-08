@@ -1,0 +1,26 @@
+.mainHeader ul {
+  list-style: none;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+  padding: 0;
+  margin: 0.5rem 0 0 0.5rem;
+}
+
+.mainHeader a {
+  margin-right: 0.5rem;
+  padding: 0.1rem 0.8rem;
+  text-decoration: none;
+  
+  color: grey;
+  border-radius: 10px;
+  border: 1px solid grey;
+}
+
+.mainHeader a:hover,
+.mainHeader a:active,
+.mainHeader a.active {
+  color: aliceblue;
+  background-color: royalblue;
+}

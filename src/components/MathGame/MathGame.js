@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 
-import GameBoard from '../UI/GameBoard';
-import GameTitle from '../GameTitle';
 import AnswerPane from "../GameUI/AnswerPane";
 import QuestionPane from "../GameUI/QuestionPane";
 import StopWatch from '../GameUI/StopWatch';
@@ -129,45 +127,42 @@ const MathGame = (props) => {
   }
 
   return (
-    <GameBoard>
-      <GameTitle />
-      <section className={classes.mathgame}>
-        { gameStarted && !gameEnd &&
-          <div>
-            <div className={classes.instructionPane}>
-              <p>Instruction:</p>
-              <p>click on the correct answer as fast as possible.</p>
-            </div>
-            <StopWatch startTime={startTime} timeout={questionTimeout_ms} onTimeout={timeoutHandler} showNumber={false} />
-            <QuestionPane number={questionIndex+1} total={totalQuestions} question={gameData.question}/>
-            <AnswerPane choices={gameData.choices} onAnswer={answerClickHandler} />
-          </div> 
-        }
-        { !gameStarted &&
-            <div>
-              <AnimateText text='Ready ?' />
-              <button className={classes.startButton} onClick={gameStartHandler}>Start
-              </button>
-            </div>
-        }
-        { gameStarted && 
-          <div className={classes['game-results']}>
-            <h4 className={classes.title}>- Your Results -</h4>
-            <div className={classes.report}>
-              <h3>Score = {`${Math.round(score * 100 / (questionTimeout_ms * totalQuestions))} / 100`}</h3>
-              <h3>Correct answers = {`${correctAns} / ${totalQuestions}`}</h3>
-              {/* <h3>Your time-score = {`${Math.round(score)}`}</h3> */}
-            </div>
+    <section className={classes.mathgame}>
+      { gameStarted && !gameEnd &&
+        <div>
+          <div className={classes.instructionPane}>
+            <p>Instruction:</p>
+            <p>click on the correct answer as fast as possible.</p>
           </div>
-        }
-        { gameStarted && !gameEnd && <button className={classes.resetButton} onClick={gameResetHandler}>Reset</button> }
-        { gameEnd &&
-          <button className={classes.playAgainButton} onClick={gameResetHandler}>
-            Play Again..
-          </button>
-        }
-      </section>
-    </GameBoard>
+          <StopWatch startTime={startTime} timeout={questionTimeout_ms} onTimeout={timeoutHandler} showNumber={false} />
+          <QuestionPane number={questionIndex+1} total={totalQuestions} question={gameData.question}/>
+          <AnswerPane choices={gameData.choices} onAnswer={answerClickHandler} />
+        </div> 
+      }
+      { !gameStarted &&
+          <div>
+            <AnimateText text='Ready ?' />
+            <button className={classes.startButton} onClick={gameStartHandler}>Start
+            </button>
+          </div>
+      }
+      { gameStarted && 
+        <div className={classes['game-results']}>
+          <h4 className={classes.title}>- Your Results -</h4>
+          <div className={classes.report}>
+            <h3>Score = {`${Math.round(score * 100 / (questionTimeout_ms * totalQuestions))} / 100`}</h3>
+            <h3>Correct answers = {`${correctAns} / ${totalQuestions}`}</h3>
+            {/* <h3>Your time-score = {`${Math.round(score)}`}</h3> */}
+          </div>
+        </div>
+      }
+      { gameStarted && !gameEnd && <button className={classes.resetButton} onClick={gameResetHandler}>Reset</button> }
+      { gameEnd &&
+        <button className={classes.playAgainButton} onClick={gameResetHandler}>
+          Play Again..
+        </button>
+      }
+    </section>
   );
 };
 
