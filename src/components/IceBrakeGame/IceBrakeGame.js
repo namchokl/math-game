@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 
 import {
   hexagonGenerator,
@@ -89,35 +89,155 @@ function createGameBoard() {
   };
 }
 
+const genPolygonListFn = (
+  cells,
+  clickHandler,
+  boardMap,
+  hexagonGen,
+  useReference = false,
+  id
+) => {
+  if (useReference) {
+    let x0, y0, x, y;
+
+    const svgObjects = cells.map((cell, index) => {
+      let obj;
+
+      if (index === 0) {
+        const position_0 = hexagonGen.getPosition_rowCol(cell.row, cell.col);
+        x0 = position_0.x;
+        y0 = position_0.y;
+
+        obj = {
+          tag: 'polygon',
+          id: id,
+          key: cell.key,
+          points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
+        };
+      } else {
+        const position = hexagonGen.getPosition_rowCol(cell.row, cell.col);
+        x = position.x - x0;
+        y = position.y - y0;
+
+        obj = {
+          tag: 'use',
+          key: cell.key,
+          xlinkHref: '#' + id,
+          transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`,
+        };
+      }
+
+      if (cell.type === 'play') {
+        // obj.onClick = cellClickHandler.bind(null, cell);
+        obj.onMouseEnter = clickHandler.bind(null, cell, boardMap, hexagonGen);
+      }
+
+      return obj;
+    });
+
+    return SvgItemListBuilder(svgObjects);
+  }
+};
+
+const initGameState = {
+  playCells: [],
+  fixedCells: [],
+  dropCells: [],
+  playCells_polygons: [],
+  fixedCells_polygons: [],
+  dropCells_polygons: [],
+};
+
+const gameStateReducer = (state, action) => {
+  const { type, payload } = action;
+
+  if (type === 'set') {
+    const { to, data, clickHandler, boardMap, hexagonGen } = payload;
+    const polygonKey = to + '_polygons';
+    const newPolygons = genPolygonListFn(
+      data,
+      clickHandler,
+      boardMap,
+      hexagonGen,
+      true,
+      'cell_' + to
+    );
+
+    const newState = { ...state, [to]: data, [polygonKey]: newPolygons };
+
+    return newState;
+  }
+
+  if (type === 'move') {
+    const { cell, from, to, clickHandler, boardMap, hexagonGen } = payload;
+    const cellIndex_from = state[from].indexOf(cell);
+    const newFrom = state[from].filter((item) => item !== cell);
+    const newTo = [...state[to], cell];
+
+    const fromPolygonKey = from + '_polygons';
+    const toPolygonKey = to + '_polygons';
+
+    const newFromPolygons =
+      cellIndex_from === 0
+        ? genPolygonListFn(
+            newFrom,
+            clickHandler,
+            boardMap,
+            hexagonGen,
+            true,
+            'cell_' + from
+          )
+        : state[fromPolygonKey].filter(
+            (item, index) => index !== cellIndex_from
+          );
+
+    // const newFromPolygons = genPolygonListFn(newFrom, clickHandler, boardMap, hexagonGen, true, 'cell_' + from);
+    const newToPolygons = genPolygonListFn(
+      newTo,
+      clickHandler,
+      boardMap,
+      hexagonGen,
+      true,
+      'cell_' + to
+    );
+
+    const newState = {
+      ...state,
+      [from]: newFrom,
+      [to]: newTo,
+      [fromPolygonKey]: newFromPolygons,
+      [toPolygonKey]: newToPolygons,
+    };
+
+    return newState;
+  }
+
+  return state;
+};
+
 const IceBrakeGame = (props) => {
   const [hexagonGen, setHexagonGen] = useState();
-  const [playCells, setPlayCells] = useState([]);
-  const [fixedCells, setFixedCells] = useState([]);
-  const [dropCells, setDropCells] = useState([]);
-  const [playPolygons, setPlayPolygons] = useState();
-  const [fixedPolygons, setFixedPolygons] = useState();
-  const [dropPolygons, setDropPolygons] = useState();
   const [boardMap, setBoardMap] = useState();
 
-  useEffect(() => {
-    setHexagonGen(hexagonGenerator(8, 20, 20, 0.9));
-    const game = createGameBoard();
-
-    setPlayCells(game.playCells);
-    setFixedCells(game.fixedCells);
-
-    setBoardMap(game.boardMap);
-  }, []);
-
-  const cellClickHandler = useCallback((cell) => {
+  const cellClickHandler = useCallback((cell, boardMap, hexagonGen) => {
     function brakeCell(theCell) {
       // 1) set cell.fixed = false.
       // 2) move cell from 'playCells' to 'dropCells'.
       // 3) find more drop cells from circum-cells.
       theCell.type = 'drop';
       theCell.fixed = false;
-      setPlayCells((prev) => prev.filter((cell) => cell !== theCell));
-      setDropCells((prev) => [...prev, theCell]);
+
+      dispatch({
+        type: 'move',
+        payload: {
+          cell: theCell,
+          from: 'playCells',
+          to: 'dropCells',
+          clickHandler: cellClickHandler,
+          boardMap: boardMap,
+          hexagonGen,
+        },
+      });
 
       const brakeCircumCell = () => {
         const unstableCells = getCircumUnstableCell(
@@ -134,199 +254,46 @@ const IceBrakeGame = (props) => {
       setTimeout(brakeCircumCell, 120);
     }
 
-    // console.log(`click on cell: ${this.col}, ${this.row}`, this);
     if (cell.type !== 'play') return;
 
     brakeCell(cell);
-  }, [boardMap]);
-
-  const genPolygonListFn = useCallback(
-    (cells, useReference = false, id) => {
-      if (useReference) {
-        let x0, y0, x, y;
-
-        const svgObjects = cells.map((cell, index) => {
-          let obj;
-
-          if (index === 0) {
-            const position_0 = hexagonGen.getPosition_rowCol(
-              cell.row,
-              cell.col
-            );
-            x0 = position_0.x;
-            y0 = position_0.y;
-
-            obj = {
-              tag: 'polygon',
-              id: id,
-              key: cell.key,
-              points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
-            };
-          } else {
-            const position = hexagonGen.getPosition_rowCol(cell.row, cell.col);
-            x = position.x - x0;
-            y = position.y - y0;
-
-            obj = {
-              tag: 'use',
-              key: cell.key,
-              xlinkHref: '#' + id,
-              transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`,
-            };
-          }
-
-          if (cell.type === 'play') {
-            // obj.onClick = cellClickHandler.bind(null, cell);
-            obj.onMouseEnter = cellClickHandler.bind(null, cell);
-          }
-
-          return obj;
-        });
-
-        return SvgItemListBuilder(svgObjects);
-      }
-    },
-    [cellClickHandler]
-  );
-
-  // const genPolygonList = (cells, useReference = false, id) => {
-  //   if (useReference) {
-  //     let x0, y0, x, y;
-
-  //     const svgObjects = cells.map((cell, index) => {
-  //       let obj;
-
-  //       if (index === 0) {
-  //         const position_0 = hexagonGen.getPosition_rowCol(cell.row, cell.col);
-  //         x0 = position_0.x;
-  //         y0 = position_0.y;
-
-  //         obj = {
-  //           tag: 'polygon',
-  //           id: id,
-  //           key: cell.key,
-  //           points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
-  //         };
-  //       } else {
-  //         const position = hexagonGen.getPosition_rowCol(cell.row, cell.col);
-  //         x = position.x - x0;
-  //         y = position.y - y0;
-
-  //         obj = {
-  //           tag: 'use',
-  //           key: cell.key,
-  //           xlinkHref: '#'+id,
-  //           transform: `translate(${x} ${y})`,
-  //         };
-  //       }
-
-  //       if (cell.type === 'play') {
-  //         obj.onClick = cellClickHandler.bind(cell);
-  //       }
-
-  //       return obj;
-  //     });
-
-  //     return SvgItemListBuilder(svgObjects);
-  //   }
-
-  //   const svgObjects = cells.map((cell) =>
-  //     cell.type === 'play'
-  //       ? {
-  //           tag: 'polygon',
-  //           key: cell.key,
-  //           points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
-  //           // style: cell.style,
-  //           onClick: cellClickHandler.bind(cell),
-  //           // onMouseEnter: cellClickHandler.bind(cell),
-  //         }
-  //       : {
-  //           tag: 'polygon',
-  //           key: cell.key,
-  //           points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
-  //         }
-  //   );
-
-  //   return SvgItemListBuilder(svgObjects);
-  // }
+  }, []);
 
   useEffect(() => {
-    if (!playCells) return;
+    const hexagonGen = hexagonGenerator(8, 20, 20, 0.9);
+    setHexagonGen(hexagonGen);
+    const game = createGameBoard();
 
-    const polygonsList = genPolygonListFn(playCells, true, 'cell1');
-    setPlayPolygons(polygonsList);
-  }, [playCells, genPolygonListFn]);
+    dispatch({
+      type: 'set',
+      payload: {
+        to: 'playCells',
+        data: game.playCells,
+        clickHandler: cellClickHandler,
+        boardMap: game.boardMap,
+        hexagonGen,
+      },
+    });
 
-  useEffect(() => {
-    if (!fixedCells) return;
+    dispatch({
+      type: 'set',
+      payload: {
+        to: 'fixedCells',
+        data: game.fixedCells,
+        clickHandler: cellClickHandler,
+        boardMap: game.boardMap,
+        hexagonGen,
+      },
+    });
 
-    const polygonsList = genPolygonListFn(fixedCells, true, 'cell2');
-    setFixedPolygons(polygonsList);
-  }, [fixedCells, genPolygonListFn]);
+    setBoardMap(game.boardMap);
+  }, [cellClickHandler]);
 
-  useEffect(() => {
-    if (!dropCells) return;
+  const [gameState, dispatch] = useReducer(gameStateReducer, initGameState);
 
-    const polygonsList = genPolygonListFn(dropCells, true, 'cell3');
-    setDropPolygons(polygonsList);
-  }, [dropCells, genPolygonListFn]);
-
-  // function brakeCell(theCell) {
-  //   // 1) set cell.fixed = false.
-  //   // 2) move cell from 'playCells' to 'dropCells'.
-  //   // 3) find more drop cells from circum-cells.
-  //   theCell.type = 'drop';
-  //   theCell.fixed = false;
-  //   setPlayCells((prev) => prev.filter((cell) => cell !== theCell));
-  //   setDropCells((prev) => [...prev, theCell]);
-
-  //   const brakeCircumCell = () => {
-  //     const unstableCells = getCircumUnstableCell(
-  //       boardMap,
-  //       theCell.row,
-  //       theCell.col
-  //     );
-
-  //     unstableCells.forEach((cell) => {
-  //       brakeCell(cell);
-  //     });
-  //   };
-
-  //   setTimeout(brakeCircumCell, 120);
-  // }
-
-  // function cellClickHandler(event) {
-  //   function brakeCell(theCell) {
-  //     // 1) set cell.fixed = false.
-  //     // 2) move cell from 'playCells' to 'dropCells'.
-  //     // 3) find more drop cells from circum-cells.
-  //     theCell.type = 'drop';
-  //     theCell.fixed = false;
-  //     setPlayCells((prev) => prev.filter((cell) => cell !== theCell));
-  //     setDropCells((prev) => [...prev, theCell]);
-
-  //     const brakeCircumCell = () => {
-  //       const unstableCells = getCircumUnstableCell(
-  //         boardMap,
-  //         theCell.row,
-  //         theCell.col
-  //       );
-
-  //       unstableCells.forEach((cell) => {
-  //         brakeCell(cell);
-  //       });
-  //     };
-
-  //     setTimeout(brakeCircumCell, 120);
-  //   }
-
-  //   // console.log(`click on cell: ${this.col}, ${this.row}`, this);
-  //   if (this.type !== 'play') return;
-
-  //   brakeCell(this);
-  // }
-
-  // const fixedClasses = classes.fixed;
+  const playPolygons = gameState.playCells_polygons;
+  const fixedPolygons = gameState.fixedCells_polygons;
+  const dropPolygons = gameState.dropCells_polygons;
 
   return (
     <div className={classes.board}>
