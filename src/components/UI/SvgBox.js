@@ -10,13 +10,19 @@ const SvgItemBuilder = {
   polyline: (attr) => <polyline {...attr} />,
 };
 
+export const buildSvgTag = (item) => {
+  const { tag, ...attr } = item;
+  return (SvgItemBuilder[tag] && SvgItemBuilder[tag](attr));
+};
+
 export const SvgItemListBuilder = (items) => {
   return (
     items
     .filter((item) => SvgItemBuilder.hasOwnProperty(item.tag))
     .map((item) => {
-      const { tag, ...attr } = item;
-      return SvgItemBuilder[tag](attr);
+      // const { tag, ...attr } = item;
+      // return SvgItemBuilder[tag](attr);
+      return buildSvgTag(item);
     })
   );
 };

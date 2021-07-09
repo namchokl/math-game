@@ -9,7 +9,7 @@ import {
   getCircumUnstableCell,
 } from '../../utils/hexagon-tools/hexagon-board';
 
-import SvgBox, { SvgGroup, SvgItemListBuilder } from '../UI/SvgBox';
+import SvgBox, { SvgGroup, SvgItemListBuilder, buildSvgTag } from '../UI/SvgBox';
 
 import classes from './IceBrakeGame.module.css';
 
@@ -32,6 +32,9 @@ const cellStyles = {
     strokeWidth: 0.5,
     visibility: 'hidden',
   },
+  hidden: {
+    visibility: 'hidden',
+  }
 };
 
 // const animate = {
@@ -89,54 +92,64 @@ function createGameBoard() {
   };
 }
 
-const genPolygonListFn = (
-  cells,
+const genCellPolygon = (
+  cell,
   clickHandler,
   boardMap,
   hexagonGen,
-  useReference = false,
-  id
+  id,
+  useTag = true,
 ) => {
-  if (useReference) {
-    let x0, y0, x, y;
+  let obj, x, y;
 
-    const svgObjects = cells.map((cell, index) => {
-      let obj;
+  if (useTag) {
+    const position = hexagonGen.getPosition_rowCol(cell.row, cell.col);
+    x = position.x;
+    y = position.y;
 
-      if (index === 0) {
-        const position_0 = hexagonGen.getPosition_rowCol(cell.row, cell.col);
-        x0 = position_0.x;
-        y0 = position_0.y;
+    obj = {
+      tag: 'use',
+      key: cell.key,
+      xlinkHref: '#' + id,
+      // transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`,
+      x: x.toFixed(2),
+      y: y.toFixed(2),
+    };
+  } else {
+    const position_0 = hexagonGen.getPosition_rowCol(cell.row, cell.col);
+    x = position_0.x;
+    y = position_0.y;
 
-        obj = {
-          tag: 'polygon',
-          id: id,
-          key: cell.key,
-          points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
-        };
-      } else {
-        const position = hexagonGen.getPosition_rowCol(cell.row, cell.col);
-        x = position.x - x0;
-        y = position.y - y0;
-
-        obj = {
-          tag: 'use',
-          key: cell.key,
-          xlinkHref: '#' + id,
-          transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`,
-        };
-      }
-
-      if (cell.type === 'play') {
-        // obj.onClick = cellClickHandler.bind(null, cell);
-        obj.onMouseEnter = clickHandler.bind(null, cell, boardMap, hexagonGen);
-      }
-
-      return obj;
-    });
-
-    return SvgItemListBuilder(svgObjects);
+    obj = {
+      tag: 'polygon',
+      id: id,
+      key: cell.key,
+      points: hexagonGen.getSvgPoints_rowCol(cell.row, cell.col),
+    };
   }
+
+  if (clickHandler && cell.type === 'play') {
+    // obj.onClick = cellClickHandler.bind(null, cell);
+    obj.onMouseEnter = clickHandler.bind(null, cell, boardMap, hexagonGen);
+  }
+
+  return obj;
+};
+
+const genPolygonListFn = (cells, clickHandler, boardMap, hexagonGen, source) => {
+
+  const svgObjects = cells.map((cell, index) => {
+    return genCellPolygon(
+      cell,
+      clickHandler,
+      boardMap,
+      hexagonGen,
+      source.id,
+      true,
+    );
+  });
+
+  return SvgItemListBuilder(svgObjects);
 };
 
 const initGameState = {
@@ -146,60 +159,120 @@ const initGameState = {
   playCells_polygons: [],
   fixedCells_polygons: [],
   dropCells_polygons: [],
+  hexagonGen: null,
+  onClick: null,
+  svgAssets: {},
+};
+
+const createSvgAssets = (hexagonGen) => {
+  const iceCellId = 'ice01';
+  // const cell_00_pos = hexagonGen.getPosition_rowCol(0, 0);
+  
+  const sourceCell = createCell(0, 0, 'asset', false);
+  // const iceCell_pos = hexagonGen.getPosition_rowCol(sourceCell.row, sourceCell.col);
+  const iceCellObj = genCellPolygon(sourceCell, null, null, hexagonGen, iceCellId, false);
+
+  const iceCellSvg = buildSvgTag(iceCellObj);
+
+  const svgAssets = {
+    iceCells: {
+      id: iceCellId,
+      svg: iceCellSvg,
+      // offset: {
+      //   x: iceCell_pos.x - cell_00_pos.x,
+      //   y: iceCell_pos.y - cell_00_pos.y,
+      // },
+    }
+  };
+
+  return svgAssets;
 };
 
 const gameStateReducer = (state, action) => {
   const { type, payload } = action;
+  const { svgAssets } = state;
 
-  if (type === 'set') {
-    const { to, data, clickHandler, boardMap, hexagonGen } = payload;
-    const polygonKey = to + '_polygons';
-    const newPolygons = genPolygonListFn(
-      data,
-      clickHandler,
+  if (type === 'init') {
+    return {
+      ...state,
+      hexagonGen: payload.hexagonGen,
+      onClick: payload.onClick,
+      svgAssets: createSvgAssets(payload.hexagonGen),
+    };
+  }
+
+  if (type === 'reset') {
+    const { playCells, fixedCells, boardMap } = createGameBoard();
+
+    const playCells_polygons = genPolygonListFn(
+      playCells,
+      state.onClick,
       boardMap,
-      hexagonGen,
-      true,
-      'cell_' + to
+      state.hexagonGen,
+      svgAssets.iceCells,
     );
 
-    const newState = { ...state, [to]: data, [polygonKey]: newPolygons };
+    const fixedCells_polygons = genPolygonListFn(
+      fixedCells,
+      state.onClick,
+      boardMap,
+      state.hexagonGen,
+      svgAssets.iceCells,
+    );
+
+    const newState = {
+      ...state,
+      playCells: playCells,
+      fixedCells: fixedCells,
+      playCells_polygons,
+      fixedCells_polygons,
+      boardMap: boardMap,
+    };
 
     return newState;
   }
 
+  // if (type === 'set') {
+  //   const { to, data, boardMap } = payload;
+  //   const polygonKey = to + '_polygons';
+  //   const newPolygons = genPolygonListFn(
+  //     data,
+  //     state.onClick,
+  //     boardMap,
+  //     state.hexagonGen,
+  //     svgAssets.iceCells,
+  //   );
+
+  //   const newState = { ...state, [to]: data, [polygonKey]: newPolygons };
+
+  //   return newState;
+  // }
+
   if (type === 'move') {
-    const { cell, from, to, clickHandler, boardMap, hexagonGen } = payload;
+    const { cell, from, to, boardMap } = payload;
+    
+    // let st, ts;
+    // st = performance.now();
+
+    // const newFrom = state[from].filter((item) => item !== cell);
     const cellIndex_from = state[from].indexOf(cell);
-    const newFrom = state[from].filter((item) => item !== cell);
+    const newFrom = state[from].slice();
+    newFrom.splice(cellIndex_from, 1);
+
+    // ts = performance.now();
+    // console.log(`%c time = ${(ts-st)}`, 'color: red');
+
     const newTo = [...state[to], cell];
 
     const fromPolygonKey = from + '_polygons';
     const toPolygonKey = to + '_polygons';
 
-    const newFromPolygons =
-      cellIndex_from === 0
-        ? genPolygonListFn(
-            newFrom,
-            clickHandler,
-            boardMap,
-            hexagonGen,
-            true,
-            'cell_' + from
-          )
-        : state[fromPolygonKey].filter(
-            (item, index) => index !== cellIndex_from
-          );
-
-    // const newFromPolygons = genPolygonListFn(newFrom, clickHandler, boardMap, hexagonGen, true, 'cell_' + from);
-    const newToPolygons = genPolygonListFn(
-      newTo,
-      clickHandler,
-      boardMap,
-      hexagonGen,
-      true,
-      'cell_' + to
+    const theMoveItem = state[fromPolygonKey][cellIndex_from];
+    const newFromPolygons = state[fromPolygonKey].filter(
+      (item, index) => index !== cellIndex_from
     );
+
+    const newToPolygons = [...state[toPolygonKey], theMoveItem];
 
     const newState = {
       ...state,
@@ -216,8 +289,8 @@ const gameStateReducer = (state, action) => {
 };
 
 const IceBrakeGame = (props) => {
-  const [hexagonGen, setHexagonGen] = useState();
-  const [boardMap, setBoardMap] = useState();
+  // const [hexagonGen, setHexagonGen] = useState();
+  // const [boardMap, setBoardMap] = useState();
 
   const cellClickHandler = useCallback((cell, boardMap, hexagonGen) => {
     function brakeCell(theCell) {
@@ -233,9 +306,7 @@ const IceBrakeGame = (props) => {
           cell: theCell,
           from: 'playCells',
           to: 'dropCells',
-          clickHandler: cellClickHandler,
           boardMap: boardMap,
-          hexagonGen,
         },
       });
 
@@ -254,39 +325,26 @@ const IceBrakeGame = (props) => {
       setTimeout(brakeCircumCell, 120);
     }
 
-    if (cell.type !== 'play') return;
-
-    brakeCell(cell);
+    if (cell.type === 'play') {
+      brakeCell(cell);
+    }
   }, []);
 
   useEffect(() => {
     const hexagonGen = hexagonGenerator(8, 20, 20, 0.9);
-    setHexagonGen(hexagonGen);
-    const game = createGameBoard();
 
     dispatch({
-      type: 'set',
+      type: 'init',
       payload: {
-        to: 'playCells',
-        data: game.playCells,
-        clickHandler: cellClickHandler,
-        boardMap: game.boardMap,
-        hexagonGen,
+        hexagonGen: hexagonGen,
+        onClick: cellClickHandler,
       },
     });
 
     dispatch({
-      type: 'set',
-      payload: {
-        to: 'fixedCells',
-        data: game.fixedCells,
-        clickHandler: cellClickHandler,
-        boardMap: game.boardMap,
-        hexagonGen,
-      },
+      type: 'reset',
+      payload: null,
     });
-
-    setBoardMap(game.boardMap);
   }, [cellClickHandler]);
 
   const [gameState, dispatch] = useReducer(gameStateReducer, initGameState);
@@ -295,9 +353,15 @@ const IceBrakeGame = (props) => {
   const fixedPolygons = gameState.fixedCells_polygons;
   const dropPolygons = gameState.dropCells_polygons;
 
+  const iceCellAsset = gameState.svgAssets.iceCells && gameState.svgAssets.iceCells.svg;
+
   return (
     <div className={classes.board}>
       <SvgBox viewBox='0 0 400 400'>
+        <SvgGroup style={cellStyles.hidden}>
+          { iceCellAsset }
+        </SvgGroup>
+        
         <SvgGroup style={cellStyles.fixed}>{fixedPolygons}</SvgGroup>
         <SvgGroup style={cellStyles.normal}>{playPolygons}</SvgGroup>
         <SvgGroup style={cellStyles.drop}>{dropPolygons}</SvgGroup>
