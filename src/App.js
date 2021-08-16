@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Route, Redirect } from 'react-router-dom';
 
 import MainHeader from './components/MainHeader';
 import MathGamePage from './pages/MathGamePage';
@@ -16,6 +16,9 @@ function App() {
         </Route>
         <Route path='/icebrake-game'>
           <IceBrakeGamePage />
+        </Route>
+        <Route path='/'>
+          <Redirect to='/math-game' />
         </Route>
       </div>
     </>
